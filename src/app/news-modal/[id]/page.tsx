@@ -107,9 +107,8 @@ export default async function NewsDetailPage({ params }: PageProps) {
 
   // Create a suggested read more link using the article URL
   const readMoreLink = article.url && article.url !== "#" ? article.url : null;
-
+  
   // Create a search query for Twitter by extracting key terms from the article title
-  // This helps find relevant tweets by focusing on main topics rather than the full title
   const createTwitterQuery = (title: string): string => {
     // Remove common words and punctuation
     const stopWords = ["a", "and", "the", "in", "of", "to", "for", "on", "with", "by", "as", "is", "at"];
