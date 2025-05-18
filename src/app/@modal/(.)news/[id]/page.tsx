@@ -2,14 +2,15 @@
 
 import { fetchTopHeadlines, NewsArticle } from "@/app/services/newsService";
 
-interface PageParams {
+// TypeScript type for the page params in Next.js App Router
+type Props = {
   params: {
     id: string;
   };
-  searchParams?: Record<string, string | string[] | undefined>;
-}
+};
 
-export default async function ArticleModal({ params }: PageParams) {
+// Define the page component according to Next.js conventions
+export default async function Page({ params }: Props) {
   // Get the ID from params
   const { id } = params;
 
