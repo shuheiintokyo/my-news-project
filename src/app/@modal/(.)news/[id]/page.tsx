@@ -2,12 +2,17 @@
 
 import { fetchTopHeadlines, NewsArticle } from "@/app/services/newsService";
 
-export default async function ArticleModal({
-  params,
-}: {
-  params: { id: string };
-}) {
-  // Simplified version to test if this works
+interface PageParams {
+  params: {
+    id: string;
+  };
+  searchParams?: Record<string, string | string[] | undefined>;
+}
+
+export default async function ArticleModal({ params }: PageParams) {
+  // Get the ID from params
+  const { id } = params;
+
   try {
     // Fetch articles from multiple categories to find the one with matching ID
     const categories = ["technology", "business", "health"];
@@ -15,7 +20,7 @@ export default async function ArticleModal({
 
     for (const category of categories) {
       const articles = await fetchTopHeadlines(category);
-      targetArticle = articles.find((article) => article.id === params.id);
+      targetArticle = articles.find((article) => article.id === id);
       if (targetArticle) break;
     }
 
