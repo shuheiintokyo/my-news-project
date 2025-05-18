@@ -32,22 +32,43 @@ export type NewsArticle = {
 export async function fetchTopHeadlines(
   category: string = "technology"
 ): Promise<NewsArticle[]> {
-  // Replace with your API key from NewsAPI.org
-  const apiKey = "YOUR_API_KEY_HERE";
+  // Your API key is already set here
+  const apiKey = process.env.NEXT_PUBLIC_NEWS_API_KEY || "";
+
+  // Build the API URL
   const url = `https://newsapi.org/v2/top-headlines?category=${category}&language=en&apiKey=${apiKey}`;
 
   try {
-    const response = await fetch(url, { next: { revalidate: 3600 } }); // Revalidate every hour
+    const response = await fetch(url, {
+      next: { revalidate: 3600 }, // Revalidate every hour
+    });
+
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
     const data = await response.json();
 
     if (data.status !== "ok") {
-      throw new Error("Failed to fetch news");
+      console.error("NewsAPI error:", data.message || "Unknown error");
+      return [];
     }
 
-    // Transform and add IDs to the articles using the defined interface
+    // If no articles are returned
+    if (
+      !data.articles ||
+      !Array.isArray(data.articles) ||
+      data.articles.length === 0
+    ) {
+      console.log(`No articles found for category: ${category}`);
+      return [];
+    }
+
+    // Transform and add IDs to the articles
     return data.articles.map((article: NewsAPIArticle, index: number) => ({
-      id: `${index}-${
-        article.title?.replace(/\s+/g, "-").toLowerCase() || index
+      id: `${category}-${index}-${
+        article.title?.replace(/\s+/g, "-").toLowerCase().slice(0, 50) || index
       }`,
       title: article.title || "No title available",
       content: article.content || "No content available",
