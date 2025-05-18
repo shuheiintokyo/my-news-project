@@ -1,29 +1,7 @@
 // src/app/components/TwitterFeed.tsx
 import Image from "next/image";
 import { Suspense } from "react";
-
-// Define the Tweet interface
-interface Tweet {
-  id: string;
-  text: string;
-  created_at: string;
-  author_id: string;
-  author_name?: string;
-  author_username?: string;
-  author_profile_image?: string;
-  public_metrics?: {
-    retweet_count: number;
-    reply_count: number;
-    like_count: number;
-    quote_count: number;
-  };
-}
-
-// Temporary mock function until we create the real service
-async function fetchTweets(query: string): Promise<Tweet[]> {
-  // Return empty array for now
-  return [];
-}
+import { fetchTweets, Tweet } from "../services/twitterService";
 
 // Loading skeleton component
 function TwitterLoading() {
