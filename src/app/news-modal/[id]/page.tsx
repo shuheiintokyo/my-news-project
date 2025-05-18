@@ -42,7 +42,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
         <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg max-w-lg w-full">
           <h1 className="text-2xl font-bold mb-4">Article Not Found</h1>
           <p className="mb-6">
-            The article you're looking for could not be found.
+            The article you&apos;re looking for could not be found.
           </p>
           <Link
             href="/"
