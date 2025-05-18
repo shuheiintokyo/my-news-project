@@ -1,9 +1,6 @@
 // src/app/@modal/(.)news/[id]/page.tsx
 
-import {
-  fetchTopHeadlines,
-  NewsArticle,
-} from "../../../../services/newsService";
+import { fetchTopHeadlines, NewsArticle } from "@/app/services/newsService";
 
 export default async function ArticleModal({
   params,
