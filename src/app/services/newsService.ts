@@ -1,4 +1,21 @@
 // src/app/services/newsService.ts
+
+// Define the structure of an article from the NewsAPI
+interface NewsAPIArticle {
+  source?: {
+    id?: string;
+    name?: string;
+  };
+  author?: string;
+  title?: string;
+  description?: string;
+  url?: string;
+  urlToImage?: string;
+  publishedAt?: string;
+  content?: string;
+}
+
+// Define the structure for our app's articles
 export type NewsArticle = {
   id: string;
   title: string;
@@ -27,8 +44,8 @@ export async function fetchTopHeadlines(
       throw new Error("Failed to fetch news");
     }
 
-    // Transform and add IDs to the articles
-    return data.articles.map((article: any, index: number) => ({
+    // Transform and add IDs to the articles using the defined interface
+    return data.articles.map((article: NewsAPIArticle, index: number) => ({
       id: `${index}-${
         article.title?.replace(/\s+/g, "-").toLowerCase() || index
       }`,
