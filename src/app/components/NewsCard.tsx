@@ -31,7 +31,7 @@ export default function NewsCard({ article }: { article: NewsArticle }) {
           {new Date(article.publishedAt).toLocaleDateString()}
         </p>
         <Link
-          href={`/news/${article.id}`}
+          href={`/news-modal/${article.id}`}
           className="text-blue-600 dark:text-blue-400 hover:underline"
         >
           Read more &gt;&gt;&gt;
