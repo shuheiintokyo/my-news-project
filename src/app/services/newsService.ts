@@ -32,7 +32,7 @@ export type NewsArticle = {
 export async function fetchTopHeadlines(
   category: string = "technology"
 ): Promise<NewsArticle[]> {
-  // Use correct environment variable name (NEWS_API_KEY instead of NEXT_PUBLIC_NEWS_API_KEY)
+  // Use correct environment variable name
   const apiKey = process.env.NEWS_API_KEY || "";
 
   if (!apiKey) {
@@ -40,18 +40,16 @@ export async function fetchTopHeadlines(
     return [];
   }
 
-  // Build the API URL
-  const url = `https://newsapi.org/v2/top-headlines?category=${category}&language=en&apiKey=${apiKey}`;
+  // Build the API URL with increased pageSize to get more articles
+  // Note: Free tier limit is 100 requests per day, so keeping pageSize reasonable
+  const url = `https://newsapi.org/v2/top-headlines?category=${category}&language=en&pageSize=10&apiKey=${apiKey}`;
 
   try {
-    // Server-side fetching - this is the key difference
-    // Using server-side fetching from Next.js server rather than from the browser client
+    // Force server-side fetch to bypass the client restriction of NewsAPI
     const response = await fetch(url, {
-      // Force server-side fetch to bypass the client restriction of NewsAPI
       cache: "no-store",
       headers: {
         "Content-Type": "application/json",
-        // Add potential headers needed for API
       },
     });
 
@@ -77,22 +75,52 @@ export async function fetchTopHeadlines(
       return [];
     }
 
+    // Process special cases in content to make it display better
+    const processContent = (content: string | undefined) => {
+      if (!content) return "No content available";
+
+      // Identify truncated content (ends with [+XXXX chars])
+      const truncatedMatch = content.match(/\[\+(\d+) chars\]$/);
+      if (truncatedMatch) {
+        const charCount = parseInt(truncatedMatch[1], 10);
+        // Format based on how much content is missing
+        if (charCount > 5000) {
+          return (
+            content +
+            " (This is just a preview. The full article is much longer.)"
+          );
+        } else {
+          return content;
+        }
+      }
+
+      return content;
+    };
+
     // Transform and add IDs to the articles
-    return data.articles.map((article: NewsAPIArticle, index: number) => ({
-      id: `${category}-${index}-${
-        article.title?.replace(/\s+/g, "-").toLowerCase().slice(0, 50) || index
-      }`,
-      title: article.title || "No title available",
-      content: article.content || "No content available",
-      description: article.description || "No description available",
-      urlToImage:
-        article.urlToImage || "https://placehold.co/600x400?text=No+Image",
-      publishedAt: article.publishedAt || new Date().toISOString(),
-      url: article.url || "#",
-      source: {
-        name: article.source?.name || "Unknown Source",
-      },
-    }));
+    return data.articles.map((article: NewsAPIArticle, index: number) => {
+      // Create a consistent ID that includes enough info to match later
+      const titleForId =
+        article.title
+          ?.toLowerCase()
+          .replace(/[^\w\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .slice(0, 50) || `article-${index}`;
+
+      return {
+        id: `${category}-${index}-${titleForId}`,
+        title: article.title || "No title available",
+        content: processContent(article.content),
+        description: article.description || "No description available",
+        urlToImage:
+          article.urlToImage || "https://placehold.co/600x400?text=No+Image",
+        publishedAt: article.publishedAt || new Date().toISOString(),
+        url: article.url || "#",
+        source: {
+          name: article.source?.name || "Unknown Source",
+        },
+      };
+    });
   } catch (error) {
     console.error("Error fetching news:", error);
     return [];

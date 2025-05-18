@@ -92,6 +92,21 @@ export default async function NewsDetailPage({ params }: PageProps) {
     );
   }
 
+  // Enhance the content display logic to handle limited content
+  const enhancedContent =
+    article.content || "No full content available from this source.";
+
+  // Remove the "[+XXXX chars]" suffix from content if present
+  const cleanContent = enhancedContent.replace(/\[\+\d+ chars\]$/, "");
+
+  // Generate a message about content limitations
+  const contentLimitMessage = enhancedContent.includes("[+")
+    ? "Note: This is a preview. The full article is available on the publisher's website."
+    : "";
+
+  // Create a suggested read more link using the article URL
+  const readMoreLink = article.url && article.url !== "#" ? article.url : null;
+
   // Display the article
   return (
     <div className="min-h-screen p-8">
@@ -118,8 +133,36 @@ export default async function NewsDetailPage({ params }: PageProps) {
           </div>
 
           <p className="text-lg mb-6">{article.description}</p>
+
           <div className="prose dark:prose-invert max-w-none">
-            <p>{article.content}</p>
+            {cleanContent === "No full content available from this source." ? (
+              <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-md mb-4">
+                <p className="font-medium text-gray-600 dark:text-gray-300">
+                  {cleanContent}
+                </p>
+              </div>
+            ) : (
+              <p>{cleanContent}</p>
+            )}
+
+            {contentLimitMessage && (
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-md">
+                <p>{contentLimitMessage}</p>
+              </div>
+            )}
+
+            {readMoreLink && (
+              <div className="mt-6">
+                <a
+                  href={readMoreLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 inline-block"
+                >
+                  Read Full Article on {article.source.name}
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="mt-8">
