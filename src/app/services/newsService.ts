@@ -32,15 +32,27 @@ export type NewsArticle = {
 export async function fetchTopHeadlines(
   category: string = "technology"
 ): Promise<NewsArticle[]> {
-  // Your API key is already set here
-  const apiKey = process.env.NEXT_PUBLIC_NEWS_API_KEY || "";
+  // Use correct environment variable name (NEWS_API_KEY instead of NEXT_PUBLIC_NEWS_API_KEY)
+  const apiKey = process.env.NEWS_API_KEY || "";
+
+  if (!apiKey) {
+    console.error("No NEWS_API_KEY found in environment variables");
+    return [];
+  }
 
   // Build the API URL
   const url = `https://newsapi.org/v2/top-headlines?category=${category}&language=en&apiKey=${apiKey}`;
 
   try {
+    // Server-side fetching - this is the key difference
+    // Using server-side fetching from Next.js server rather than from the browser client
     const response = await fetch(url, {
-      next: { revalidate: 3600 }, // Revalidate every hour
+      // Force server-side fetch to bypass the client restriction of NewsAPI
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        // Add potential headers needed for API
+      },
     });
 
     if (!response.ok) {
