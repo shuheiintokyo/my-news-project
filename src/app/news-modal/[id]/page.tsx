@@ -3,6 +3,9 @@ import { fetchTopHeadlines, NewsArticle } from "@/app/services/newsService";
 import Image from "next/image";
 import Link from "next/link";
 
+// Mark this page as dynamic to avoid static generation errors
+export const dynamic = "force-dynamic";
+
 // Define the proper Page Props interface for Next.js App Router
 interface PageProps {
   params: {
@@ -13,19 +16,53 @@ interface PageProps {
 export default async function NewsDetailPage({ params }: PageProps) {
   const id = params.id;
 
-  // Function to fetch the article
-  async function getArticle(id: string): Promise<NewsArticle | null> {
-    try {
-      // Try to find the article in different categories
-      const categories = ["technology", "business", "health"];
+  // Extract category from id (they're formatted as "category-index-title")
+  const category = id.split("-")[0];
 
-      for (const category of categories) {
-        const articles = await fetchTopHeadlines(category);
-        const article = articles.find((article) => article.id === id);
-        if (article) return article;
+  // Function to fetch the article
+  async function getArticle(
+    id: string,
+    category: string
+  ): Promise<NewsArticle | null> {
+    try {
+      // Fetch articles from the specific category
+      const articles = await fetchTopHeadlines(category);
+
+      // Find the article that best matches our ID
+      // We'll do a partial match on the ID since IDs might be generated differently each time
+      const article = articles.find((article) => {
+        // Check if the ID contains parts of the requested ID
+        // This is more flexible than an exact match
+        return article.id.includes(id) || id.includes(article.id);
+      });
+
+      // If no direct match, try to find by looking for the headline in the ID
+      if (!article) {
+        // Extract headline words from the ID
+        const idWords = id
+          .split("-")
+          .slice(2)
+          .filter((word) => word.length > 3);
+
+        // If we have words to match
+        if (idWords.length > 0) {
+          // Try to find an article whose title contains most of these words
+          return (
+            articles.find((article) => {
+              const titleLower = article.title.toLowerCase();
+              // Count how many ID words appear in the title
+              const matchCount = idWords.filter((word) =>
+                titleLower.includes(word.toLowerCase())
+              ).length;
+
+              // If more than half the words match, consider it a match
+              return matchCount > idWords.length / 2;
+            }) || null
+          );
+        }
       }
 
-      return null;
+      return article || null;
     } catch (error) {
       console.error("Error fetching article:", error);
       return null;
@@ -33,7 +70,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
   }
 
   // Fetch the article
-  const article = await getArticle(id);
+  const article = await getArticle(id, category);
 
   // Handle article not found
   if (!article) {

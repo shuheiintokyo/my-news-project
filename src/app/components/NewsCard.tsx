@@ -10,6 +10,9 @@ export default function NewsCard({ article }: { article: NewsArticle }) {
       ? `${article.description.substring(0, 100)}...`
       : article.description;
 
+  // Create the link to the article's detail page
+  const articleLink = `/news-modal/${article.id}`;
+
   return (
     <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg hover:shadow-lg transition-shadow">
       {article.urlToImage && (
@@ -31,7 +34,7 @@ export default function NewsCard({ article }: { article: NewsArticle }) {
           {new Date(article.publishedAt).toLocaleDateString()}
         </p>
         <Link
-          href={`/news-modal/${article.id}`}
+          href={articleLink}
           className="text-blue-600 dark:text-blue-400 hover:underline"
         >
           Read more &gt;&gt;&gt;
