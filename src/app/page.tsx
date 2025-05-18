@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { fetchTopHeadlines } from "./services/newsService";
 import NewsCard from "./components/NewsCard";
 
+export const dynamic = "force-dynamic";
+
 // Properly typed props interface
 interface LoadingCardProps {
   title: string;
@@ -16,7 +18,7 @@ function LoadingCard({ title }: LoadingCardProps) {
       <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-3/4"></div>
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mt-4"></div>
+      <div classNamgit ae="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mt-4"></div>
     </div>
   );
 }
