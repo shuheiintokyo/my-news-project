@@ -23,7 +23,7 @@ This is a Next.js 15 news aggregation application that fetches content from mult
 **News Services Layer** (`src/app/services/`):
 - `newsService.ts` - Fetches from NewsAPI (requires NEWS_API_KEY)
 - `guardianService.ts` - Fetches from The Guardian API (requires GUARDIAN_API_KEY) 
-- `redditService.ts` - Fetches from Reddit API (requires REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET)
+- `redditService.ts` - Fetches from Reddit public API (no authentication required)
 
 All services transform external API responses into a common `NewsArticle` interface for consistency.
 
@@ -41,9 +41,7 @@ All services transform external API responses into a common `NewsArticle` interf
 ### Environment Variables Required
 
 - `NEWS_API_KEY` - NewsAPI key for technology/business/health news
-- `GUARDIAN_API_KEY` - The Guardian API key  
-- `REDDIT_CLIENT_ID` - Reddit API client ID for authentication
-- `REDDIT_CLIENT_SECRET` - Reddit API client secret for authentication
+- `GUARDIAN_API_KEY` - The Guardian API key
 
 ### Key Technical Details
 

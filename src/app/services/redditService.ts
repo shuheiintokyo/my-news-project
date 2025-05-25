@@ -47,8 +47,9 @@ interface RedditApiResponse {
 }
 
 // Helper function to transform Reddit data
-function transformRedditData(data: RedditApiResponse, subreddit: string): NewsArticle[] {
+function transformRedditData(data: RedditApiResponse): NewsArticle[] {
   if (!data.data?.children) {
+    console.warn('⚠️ No children in Reddit API response');
     return [];
   }
 
@@ -59,14 +60,14 @@ function transformRedditData(data: RedditApiResponse, subreddit: string): NewsAr
     let imageUrl: string | undefined;
     if (post.preview?.images?.[0]?.source?.url) {
       imageUrl = post.preview.images[0].source.url.replace(/&amp;/g, '&');
-    } else if (post.thumbnail && post.thumbnail !== 'self' && post.thumbnail !== 'default') {
+    } else if (post.thumbnail && post.thumbnail !== 'self' && post.thumbnail !== 'default' && post.thumbnail !== 'nsfw') {
       imageUrl = post.thumbnail;
     }
 
-    // Create description from selftext or use title
+    // Create description from selftext or use default
     const description = post.selftext 
       ? post.selftext.substring(0, 200) + (post.selftext.length > 200 ? '...' : '')
-      : `Posted in r/${post.subreddit} by u/${post.author}`;
+      : `Posted in r/${post.subreddit} by u/${post.author} • ${post.score} upvotes • ${post.num_comments} comments`;
 
     return {
       id: `reddit-${post.id}`,
@@ -83,118 +84,18 @@ function transformRedditData(data: RedditApiResponse, subreddit: string): NewsAr
   });
 }
 
-// Get Reddit access token using client credentials
-async function getRedditAccessToken(): Promise<string | null> {
-  const clientId = process.env.REDDIT_CLIENT_ID;
-  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
-
-  console.log('🔍 Reddit Auth Debug:', {
-    hasClientId: !!clientId,
-    hasClientSecret: !!clientSecret,
-    clientIdLength: clientId?.length,
-    clientSecretLength: clientSecret?.length
-  });
-
-  if (!clientId || !clientSecret) {
-    console.error("❌ Reddit credentials not found in environment variables");
-    console.log('Available env vars:', Object.keys(process.env).filter(key => key.includes('REDDIT')));
-    return null;
-  }
-
-  try {
-    const auth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-    console.log('🔑 Making Reddit auth request with basic auth...');
-    
-    const response = await fetch('https://www.reddit.com/api/v1/access_token', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'my-news-project/1.0.0'
-      },
-      body: 'grant_type=client_credentials',
-    });
-
-    console.log('📡 Reddit auth response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Reddit auth error: ${response.status} ${response.statusText}`);
-      console.error('Error body:', errorText);
-      return null;
-    }
-
-    const data = await response.json();
-    console.log('✅ Reddit auth success:', {
-      hasAccessToken: !!data.access_token,
-      tokenType: data.token_type,
-      expiresIn: data.expires_in
-    });
-    
-    return data.access_token;
-  } catch (error) {
-    console.error('❌ Error getting Reddit access token:', error);
-    return null;
-  }
-}
-
-// Fetch posts from a specific subreddit
+// Fetch posts from a specific subreddit using public API
 export async function fetchRedditPosts(subreddit: string, limit: number = 10): Promise<NewsArticle[]> {
   console.log(`🚀 Fetching Reddit posts from r/${subreddit} (limit: ${limit})`);
   
   try {
-    // Try without authentication first (public endpoint)
-    const publicUrl = `https://www.reddit.com/r/${subreddit}/hot.json?limit=${limit}`;
-    console.log('📡 Trying public Reddit API first:', publicUrl);
-    
-    const publicResponse = await fetch(publicUrl, {
-      headers: {
-        'User-Agent': 'my-news-project/1.0.0'
-      },
-      cache: 'no-store'
-    });
-
-    console.log('📡 Public Reddit API response:', {
-      status: publicResponse.status,
-      statusText: publicResponse.statusText
-    });
-
-    if (publicResponse.ok) {
-      const publicData: RedditApiResponse = await publicResponse.json();
-      console.log('📊 Public Reddit API data structure:', {
-        hasData: !!publicData.data,
-        hasChildren: !!publicData.data?.children,
-        childrenCount: publicData.data?.children?.length || 0
-      });
-
-      if (publicData.data?.children?.length > 0) {
-        console.log('✅ Using public Reddit API (no auth needed)');
-        const articles = transformRedditData(publicData, subreddit);
-        console.log(`✅ Successfully transformed ${articles.length} Reddit posts from r/${subreddit}`);
-        return articles;
-      }
-    }
-
-    // Fall back to OAuth if public doesn't work
-    console.log('🔄 Falling back to OAuth Reddit API...');
-    const accessToken = await getRedditAccessToken();
-    
-    if (!accessToken) {
-      console.error("❌ No access token available for Reddit API");
-      return [];
-    }
-
-    const url = `https://oauth.reddit.com/r/${subreddit}/hot.json?limit=${limit}`;
-    console.log('📡 Making OAuth Reddit API request:', url);
+    // Use public Reddit API endpoint - no authentication required
+    const url = `https://www.reddit.com/r/${subreddit}/hot.json?limit=${limit}`;
+    console.log('📡 Making public Reddit API request:', url);
     
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'User-Agent': 'my-news-project/1.0.0'
+        'User-Agent': 'my-news-project/1.0.0 (https://github.com/shuheiintokyo/my-news-project)'
       },
       cache: 'no-store'
     });
@@ -213,19 +114,19 @@ export async function fetchRedditPosts(subreddit: string, limit: number = 10): P
     }
 
     const data: RedditApiResponse = await response.json();
-    console.log('📊 OAuth Reddit API data structure:', {
+    console.log('📊 Reddit API data structure:', {
       hasData: !!data.data,
       hasChildren: !!data.data?.children,
       childrenCount: data.data?.children?.length || 0
     });
     
-    if (!data.data?.children) {
-      console.warn('⚠️ No children in OAuth Reddit API response');
+    if (!data.data?.children || data.data.children.length === 0) {
+      console.warn(`⚠️ No posts found in r/${subreddit}`);
       return [];
     }
 
-    const articles = transformRedditData(data, subreddit);
-    console.log(`✅ Successfully transformed ${articles.length} Reddit posts from r/${subreddit} via OAuth`);
+    const articles = transformRedditData(data);
+    console.log(`✅ Successfully transformed ${articles.length} Reddit posts from r/${subreddit}`);
     console.log('Sample post titles:', articles.slice(0, 3).map(a => a.title));
     
     return articles;
@@ -235,10 +136,10 @@ export async function fetchRedditPosts(subreddit: string, limit: number = 10): P
   }
 }
 
-// Fetch trending posts from multiple subreddits
+// Fetch trending posts from multiple popular subreddits
 export async function fetchTrendingRedditPosts(): Promise<NewsArticle[]> {
   console.log('🔥 Fetching trending Reddit posts from multiple subreddits...');
-  const subreddits = ['technology', 'programming', 'news', 'worldnews'];
+  const subreddits = ['technology', 'programming', 'worldnews', 'science'];
   const allPosts: NewsArticle[] = [];
 
   for (const subreddit of subreddits) {
@@ -249,71 +150,37 @@ export async function fetchTrendingRedditPosts(): Promise<NewsArticle[]> {
   }
 
   console.log(`🔥 Total trending posts collected: ${allPosts.length}`);
-  // Sort by score (extracted from content) and return top posts
-  const result = allPosts.slice(0, 10);
+  
+  // Sort by score (parse from content) and return top posts
+  const sortedPosts = allPosts.sort((a, b) => {
+    const scoreA = parseInt(a.content?.match(/Score: (\d+)/)?.[1] || '0');
+    const scoreB = parseInt(b.content?.match(/Score: (\d+)/)?.[1] || '0');
+    return scoreB - scoreA;
+  });
+  
+  const result = sortedPosts.slice(0, 10);
   console.log(`🔥 Returning top ${result.length} trending posts`);
   return result;
 }
 
-// Search Reddit posts by query
+// Search Reddit posts by query using public search endpoint
 export async function searchRedditPosts(query: string, limit: number = 10): Promise<NewsArticle[]> {
   console.log(`🔍 Searching Reddit for: "${query}" (limit: ${limit})`);
   
   try {
-    // Try public search first
+    // Use public Reddit search endpoint
     const encodedQuery = encodeURIComponent(query);
-    const publicUrl = `https://www.reddit.com/search.json?q=${encodedQuery}&limit=${limit}&sort=relevance`;
-    console.log('📡 Trying public Reddit search:', publicUrl);
-    
-    const publicResponse = await fetch(publicUrl, {
-      headers: {
-        'User-Agent': 'my-news-project/1.0.0'
-      },
-      cache: 'no-store'
-    });
-
-    console.log('📡 Public Reddit search response:', {
-      status: publicResponse.status,
-      statusText: publicResponse.statusText
-    });
-
-    if (publicResponse.ok) {
-      const publicData: RedditApiResponse = await publicResponse.json();
-      console.log('📊 Public Reddit search data:', {
-        hasData: !!publicData.data,
-        hasChildren: !!publicData.data?.children,
-        childrenCount: publicData.data?.children?.length || 0
-      });
-
-      if (publicData.data?.children?.length > 0) {
-        console.log('✅ Using public Reddit search (no auth needed)');
-        const articles = transformRedditData(publicData, 'search');
-        console.log(`✅ Successfully found ${articles.length} Reddit posts for "${query}"`);
-        return articles;
-      }
-    }
-
-    // Fall back to OAuth search
-    console.log('🔄 Falling back to OAuth Reddit search...');
-    const accessToken = await getRedditAccessToken();
-    
-    if (!accessToken) {
-      console.error("❌ No access token available for Reddit search");
-      return [];
-    }
-
-    const url = `https://oauth.reddit.com/search.json?q=${encodedQuery}&limit=${limit}&sort=relevance`;
-    console.log('📡 Making OAuth Reddit search request:', url);
+    const url = `https://www.reddit.com/search.json?q=${encodedQuery}&limit=${limit}&sort=relevance&t=week`;
+    console.log('📡 Making public Reddit search request:', url);
     
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'User-Agent': 'my-news-project/1.0.0'
+        'User-Agent': 'my-news-project/1.0.0 (https://github.com/shuheiintokyo/my-news-project)'
       },
       cache: 'no-store'
     });
 
-    console.log('📡 OAuth Reddit search response:', {
+    console.log('📡 Reddit search response:', {
       status: response.status,
       statusText: response.statusText
     });
@@ -326,19 +193,19 @@ export async function searchRedditPosts(query: string, limit: number = 10): Prom
     }
 
     const data: RedditApiResponse = await response.json();
-    console.log('📊 OAuth Reddit search data:', {
+    console.log('📊 Reddit search data:', {
       hasData: !!data.data,
       hasChildren: !!data.data?.children,
       childrenCount: data.data?.children?.length || 0
     });
     
-    if (!data.data?.children) {
-      console.warn('⚠️ No children in OAuth Reddit search response');
+    if (!data.data?.children || data.data.children.length === 0) {
+      console.warn(`⚠️ No search results found for "${query}"`);
       return [];
     }
 
-    const articles = transformRedditData(data, 'search');
-    console.log(`✅ Successfully found ${articles.length} Reddit posts for "${query}" via OAuth`);
+    const articles = transformRedditData(data);
+    console.log(`✅ Successfully found ${articles.length} Reddit posts for "${query}"`);
     
     return articles;
   } catch (error) {
