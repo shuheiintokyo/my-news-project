@@ -103,13 +103,31 @@ export async function fetchRedditPosts(subreddit: string, limit: number = 10): P
     console.log('📡 Reddit API response:', {
       status: response.status,
       statusText: response.statusText,
-      url: response.url
+      url: response.url,
+      headers: Object.fromEntries(response.headers.entries()),
+      redirected: response.redirected
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`❌ Reddit API error: ${response.status} ${response.statusText}`);
       console.error('Error body:', errorText);
+      console.error('Request details:', {
+        url,
+        userAgent: 'my-news-project/1.0.0 (https://github.com/shuheiintokyo/my-news-project)',
+        subreddit,
+        limit
+      });
+      
+      // Check for common Reddit issues
+      if (response.status === 429) {
+        console.error('🚫 Rate limited by Reddit - need to slow down requests');
+      } else if (response.status === 403) {
+        console.error('🚫 Forbidden by Reddit - might be blocking Vercel servers');
+      } else if (response.status === 404) {
+        console.error('🚫 Reddit endpoint not found - API might have changed');
+      }
+      
       return [];
     }
 
