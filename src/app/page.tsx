@@ -2,10 +2,7 @@
 import { Suspense } from "react";
 import { fetchTopHeadlines } from "./services/newsService";
 import { fetchGuardianHeadlines } from "./services/guardianService";
-import {
-  fetchTwitterTrends,
-  fetchTwitterTrendingTopics,
-} from "./services/twitterService";
+import { fetchRedditPosts, fetchTrendingRedditPosts } from "./services/redditService";
 import NewsCard from "./components/NewsCard";
 
 // Mark this page as dynamic to avoid static generation errors
@@ -64,38 +61,38 @@ async function GuardianSection({ section }: { section: string }) {
   );
 }
 
-// A component to fetch and display Twitter trending topics
-async function TwitterTrendsSection() {
-  const trends = await fetchTwitterTrendingTopics();
+// A component to fetch and display trending Reddit posts
+async function RedditTrendingSection() {
+  const posts = await fetchTrendingRedditPosts();
 
   return (
     <div>
       <h2 className="text-3xl font-bold mb-6 flex items-center">
         <span className="mr-2">🔥</span>
-        Twitter Trending Topics
+        Reddit Trending Posts
       </h2>
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {trends.slice(0, 6).map((trend) => (
-          <NewsCard key={trend.id} article={trend} />
+        {posts.slice(0, 6).map((post) => (
+          <NewsCard key={post.id} article={post} />
         ))}
       </div>
     </div>
   );
 }
 
-// A component to fetch and display tweets about a specific topic
-async function TwitterTopicSection({ topic }: { topic: string }) {
-  const tweets = await fetchTwitterTrends(topic);
+// A component to fetch and display posts from a specific subreddit
+async function RedditSubredditSection({ subreddit }: { subreddit: string }) {
+  const posts = await fetchRedditPosts(subreddit, 6);
 
   return (
     <div>
       <h2 className="text-3xl font-bold mb-6 flex items-center">
-        <span className="mr-2">🐦</span>
-        Twitter: {topic.charAt(0).toUpperCase() + topic.slice(1)} Talk
+        <span className="mr-2">📱</span>
+        Reddit: r/{subreddit}
       </h2>
       <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {tweets.slice(0, 3).map((tweet) => (
-          <NewsCard key={tweet.id} article={tweet} />
+        {posts.slice(0, 3).map((post) => (
+          <NewsCard key={post.id} article={post} />
         ))}
       </div>
     </div>
@@ -152,13 +149,13 @@ export default function Home() {
           <GuardianSection section="technology" />
         </Suspense>
 
-        {/* Twitter Trending Topics */}
+        {/* Reddit Trending Posts */}
         <Suspense
           fallback={
             <div>
               <h2 className="text-3xl font-bold mb-6 flex items-center">
                 <span className="mr-2">🔥</span>
-                Twitter Trending Topics
+                Reddit Trending Posts
               </h2>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -168,16 +165,16 @@ export default function Home() {
             </div>
           }
         >
-          <TwitterTrendsSection />
+          <RedditTrendingSection />
         </Suspense>
 
-        {/* Twitter Technology Topic */}
+        {/* Reddit Technology Subreddit */}
         <Suspense
           fallback={
             <div>
               <h2 className="text-3xl font-bold mb-6 flex items-center">
-                <span className="mr-2">🐦</span>
-                Twitter: Technology Talk
+                <span className="mr-2">📱</span>
+                Reddit: r/technology
               </h2>
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((i) => (
@@ -187,7 +184,7 @@ export default function Home() {
             </div>
           }
         >
-          <TwitterTopicSection topic="technology" />
+          <RedditSubredditSection subreddit="technology" />
         </Suspense>
 
         {/* NewsAPI Business News */}
@@ -231,7 +228,7 @@ export default function Home() {
       <footer className="mt-16 text-center text-sm">
         <p>© 2025 My News Project - Built with Next.js</p>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Powered by NewsAPI, The Guardian, and Twitter
+          Powered by NewsAPI, The Guardian, and Reddit
         </p>
       </footer>
     </div>
