@@ -2,7 +2,7 @@
 import { fetchTopHeadlines, NewsArticle } from "@/app/services/newsService";
 import Image from "next/image";
 import Link from "next/link";
-import TwitterFeed from "@/app/components/TwitterFeed";
+import RedditFeed from "@/app/components/RedditFeed";
 
 // Mark this page as dynamic to avoid static generation errors
 export const dynamic = "force-dynamic";
@@ -108,8 +108,8 @@ export default async function NewsDetailPage({ params }: PageProps) {
   // Create a suggested read more link using the article URL
   const readMoreLink = article.url && article.url !== "#" ? article.url : null;
 
-  // Create a search query for Twitter by extracting key terms from the article title
-  const createTwitterQuery = (title: string): string => {
+  // Create a search query for Reddit by extracting key terms from the article title
+  const createRedditQuery = (title: string): string => {
     // Remove common words and punctuation
     const stopWords = ["a", "and", "the", "in", "of", "to", "for", "on", "with", "by", "as", "is", "at"];
     const words = title
@@ -121,12 +121,11 @@ export default async function NewsDetailPage({ params }: PageProps) {
     // Take the most important 3-4 words to avoid too specific queries
     const keyTerms = words.slice(0, 4);
     
-    // Add the category as a hashtag for relevance
-    return `${keyTerms.join(" ")} #${category}`;
+    return keyTerms.join(" ");
   };
   
-  // Generate Twitter search query based on the article title
-  const twitterQuery = createTwitterQuery(article.title);
+  // Generate Reddit search query based on the article title
+  const redditQuery = createRedditQuery(article.title);
 
   // Display the article
   return (
@@ -174,7 +173,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
 
             {readMoreLink && (
               <div className="mt-6">
-                
+                <a
                   href={readMoreLink}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -186,9 +185,9 @@ export default async function NewsDetailPage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Twitter Feed Section */}
+          {/* Reddit Feed Section */}
           <div className="mt-10 pt-8 border-t border-gray-200 dark:border-gray-700">
-            <TwitterFeed query={twitterQuery} />
+            <RedditFeed query={redditQuery} />
           </div>
 
           <div className="mt-8">
