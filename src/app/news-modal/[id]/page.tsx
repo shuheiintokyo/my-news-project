@@ -174,7 +174,7 @@ export default async function NewsDetailPage({ params }: PageProps) {
 
             {readMoreLink && (
               <div className="mt-6">
-                
+                <a
                   href={readMoreLink}
                   target="_blank"
                   rel="noopener noreferrer"
