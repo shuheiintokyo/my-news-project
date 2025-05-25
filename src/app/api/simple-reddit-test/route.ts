@@ -46,7 +46,7 @@ export async function GET() {
       });
     }
 
-    const posts = data.data.children.map((child: any) => ({
+    const posts = data.data.children.map((child: { data: { id: string; title: string; score: number; subreddit: string; author: string } }) => ({
       id: child.data.id,
       title: child.data.title,
       score: child.data.score,
