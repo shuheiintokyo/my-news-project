@@ -63,40 +63,112 @@ async function GuardianSection({ section }: { section: string }) {
 
 // A component to fetch and display trending Reddit posts
 async function RedditTrendingSection() {
-  const posts = await fetchTrendingRedditPosts();
+  console.log('🔥 RedditTrendingSection component is rendering...');
+  
+  try {
+    const posts = await fetchTrendingRedditPosts();
+    console.log(`🔥 RedditTrendingSection got ${posts.length} posts`);
 
-  return (
-    <div>
-      <h2 className="text-3xl font-bold mb-6 flex items-center">
-        <span className="mr-2">🔥</span>
-        Reddit Trending Posts
-      </h2>
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {posts.slice(0, 6).map((post) => (
-          <NewsCard key={post.id} article={post} />
-        ))}
+    if (posts.length === 0) {
+      return (
+        <div>
+          <h2 className="text-3xl font-bold mb-6 flex items-center">
+            <span className="mr-2">🔥</span>
+            Reddit Trending Posts
+          </h2>
+          <div className="bg-yellow-100 dark:bg-yellow-900 p-4 rounded-lg">
+            <p className="text-yellow-800 dark:text-yellow-200">
+              ⚠️ No Reddit posts found. Check console logs for debugging information.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <h2 className="text-3xl font-bold mb-6 flex items-center">
+          <span className="mr-2">🔥</span>
+          Reddit Trending Posts ({posts.length} found)
+        </h2>
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {posts.slice(0, 6).map((post) => (
+            <NewsCard key={post.id} article={post} />
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error('❌ RedditTrendingSection error:', error);
+    return (
+      <div>
+        <h2 className="text-3xl font-bold mb-6 flex items-center">
+          <span className="mr-2">🔥</span>
+          Reddit Trending Posts
+        </h2>
+        <div className="bg-red-100 dark:bg-red-900 p-4 rounded-lg">
+          <p className="text-red-800 dark:text-red-200">
+            ❌ Error loading Reddit posts: {error instanceof Error ? error.message : 'Unknown error'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 }
 
 // A component to fetch and display posts from a specific subreddit
 async function RedditSubredditSection({ subreddit }: { subreddit: string }) {
-  const posts = await fetchRedditPosts(subreddit, 6);
+  console.log(`📱 RedditSubredditSection component rendering for r/${subreddit}...`);
+  
+  try {
+    const posts = await fetchRedditPosts(subreddit, 6);
+    console.log(`📱 RedditSubredditSection got ${posts.length} posts from r/${subreddit}`);
 
-  return (
-    <div>
-      <h2 className="text-3xl font-bold mb-6 flex items-center">
-        <span className="mr-2">📱</span>
-        Reddit: r/{subreddit}
-      </h2>
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {posts.slice(0, 3).map((post) => (
-          <NewsCard key={post.id} article={post} />
-        ))}
+    if (posts.length === 0) {
+      return (
+        <div>
+          <h2 className="text-3xl font-bold mb-6 flex items-center">
+            <span className="mr-2">📱</span>
+            Reddit: r/{subreddit}
+          </h2>
+          <div className="bg-yellow-100 dark:bg-yellow-900 p-4 rounded-lg">
+            <p className="text-yellow-800 dark:text-yellow-200">
+              ⚠️ No posts found in r/{subreddit}. Check console logs for debugging information.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <h2 className="text-3xl font-bold mb-6 flex items-center">
+          <span className="mr-2">📱</span>
+          Reddit: r/{subreddit} ({posts.length} found)
+        </h2>
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+          {posts.slice(0, 3).map((post) => (
+            <NewsCard key={post.id} article={post} />
+          ))}
+        </div>
       </div>
-    </div>
-  );
+    );
+  } catch (error) {
+    console.error(`❌ RedditSubredditSection error for r/${subreddit}:`, error);
+    return (
+      <div>
+        <h2 className="text-3xl font-bold mb-6 flex items-center">
+          <span className="mr-2">📱</span>
+          Reddit: r/{subreddit}
+        </h2>
+        <div className="bg-red-100 dark:bg-red-900 p-4 rounded-lg">
+          <p className="text-red-800 dark:text-red-200">
+            ❌ Error loading r/{subreddit}: {error instanceof Error ? error.message : 'Unknown error'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 }
 
 export default function Home() {
